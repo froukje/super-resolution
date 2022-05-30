@@ -18,7 +18,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, Callback
 
 class SRDataset(Dataset):
-    def __init__(self, data_path, transform=None):
+    def __init__(self, data_path, args, transform=None):
         '''
         data: image
         transform: optional transforms applied to the image
@@ -27,8 +27,12 @@ class SRDataset(Dataset):
         print(f'read images {data_path} ...')
         # read data
         h5_file = h5py.File(data_path, 'r')
-        self.X = h5_file['X'][:]
-        self.y = h5_file['y'][:]
+        if args.debug:
+            self.X = h5_file['X'][:10]
+            self.y = h5_file['y'][:10]
+        else:
+            self.X = h5_file['X'][:]
+            self.y = h5_file['y'][:]
         self.transform = transform
         print(f'loading images took {start_time - time.time():.4f}sec')
 
@@ -47,15 +51,21 @@ class SRDataset(Dataset):
 class SRDataModule(pl.LightningDataModule):
     def __init__(self, args):
         super().__init__()
-        self.transform = transforms.Compose([transforms.ToTensor()])
+        self.train_transform = transforms.Compose([transforms.ToPILImage(),
+                                                transforms.RandomHorizontalFlip(),
+                                             transforms.RandomVerticalFlip(),
+                                             transforms.ToTensor(),
+                                             transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
+        self.val_transform = transforms.Compose([transforms.ToTensor(),
+                                                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
 
     def setup(self, stage):
         if stage == 'fit' or stage is None:
             sr_train = os.path.join(args.data_dir, 'train.h5')
             sr_valid = os.path.join(args.data_dir, 'valid.h5')
 
-            self.train_dataset = SRDataset(sr_train, transform=self.transform)
-            self.valid_dataset = SRDataset(sr_valid, transform=self.transform)
+            self.train_dataset = SRDataset(sr_train, args, transform=self.train_transform)
+            self.valid_dataset = SRDataset(sr_valid, args, transform=self.val_transform)
 
     def train_dataloader(self):
         train_dataloader = DataLoader(self.train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
@@ -332,6 +342,7 @@ def make_predictions(model, dataloader, trainer, args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--data-dir', type=str, default='data')
     parser.add_argument('--output-path', type=str, default='data/best_hr_predictions.h5')
     parser.add_argument('--save-model-path', type=str, default='saved_models')
@@ -343,7 +354,7 @@ if __name__ == '__main__':
     parser.add_argument('--small_kernel_size', type=int, default=3) # kernel size of all convolutions in-between, i.e. those in the residual and subpixel convolutional blocks 
     parser.add_argument('--n_blocks', type=int, default=16) # number of residual blocks
     parser.add_argument('--n_epochs', type=int, default=200)
-    parser.add_argument('--nni', action='store_true')
+    parser.add_argument('--nni', action='store_true', default=False)
     parser = pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()
 
