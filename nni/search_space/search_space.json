@@ -1,0 +1,14 @@
+{
+    "n_channels": {
+        "_type": "quniform",
+        "_value": [4, 32, 2]
+    },
+    "batch_size": {
+        "_type": "quniform",
+        "_value": [4, 32, 2]
+    },
+    "n_blocks":{
+        "_type": "quniform",
+        "_value": [4, 32, 4]
+    }
+}

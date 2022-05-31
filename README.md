@@ -16,7 +16,7 @@
     * SRResNet
     * SRGAN (ToDo)
 * based on: Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network, Ledig et al. (2017), https://doi.org/10.48550/arXiv.1609.04802
-* model code based on https://doi.org/10.48550/arXiv.1609.04802
+* model code based on https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Super-Resolution
 * converted to pytorch lightning
 * added NNI for hyperparamtertuning
 

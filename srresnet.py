@@ -69,7 +69,7 @@ class SRDataModule(pl.LightningDataModule):
 
     def train_dataloader(self):
         train_dataloader = DataLoader(self.train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
-        print(f'train_datloader: {next(iter(train_dataloader))[0].shape}')
+        print(f'train_dataloader: {next(iter(train_dataloader))[0].shape}')
         print(f'train_dataloader: {next(iter(train_dataloader))[1].shape}')
         return train_dataloader
 
@@ -277,7 +277,7 @@ class SRResNet(pl.LightningModule):
         loss = self.mse_loss(y_hat, y)
         self.log('val_loss', loss)
 
-    def predict_step(self, val_batch, batch_idx, dataloader_idx):
+    def predict_step(self, val_batch, batch_idx):
         x, y = val_batch
         y_pred = self.forward(x)
         loss = self.mse_loss(y_pred, y)
@@ -323,10 +323,21 @@ def add_nni_params(args):
 
 
 
-def make_predictions(model, dataloader, trainer, args):
-    y_pred = trainer.predict(model, dataloader)
-    y_pred = torch.cat(y_pred).detach().cpu().numpy()
+def make_predictions(model, dataloader, args):
+    print('make predictions...')
+    start_time = time.time()
+    y_pred = []
+    for batch in dataloader:
+        X, y = batch
+        pred = model(X)
+        y_pred.append(pred)
+    y_pred = torch.concat(y_pred, axis=0).detach()
+    if args.accelerator=='gpu':
+        y_pred = y_pred.cpu().numpy()
 
+    print('predictions finished.')
+    print(f'making predictions took: {time.time()-start_time}:.3f')
+    print('save predictions ...')
     h5_file = h5py.File(args.output_path, 'w')
     chunk_size =  y_pred.shape[0]
     dset = h5_file.create_dataset('y_pred',
@@ -341,21 +352,24 @@ def make_predictions(model, dataloader, trainer, args):
 
 
 if __name__ == '__main__':
+    print(torch.cuda.device_count())
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--data-dir', type=str, default='data')
     parser.add_argument('--output-path', type=str, default='data/best_hr_predictions.h5')
     parser.add_argument('--save-model-path', type=str, default='saved_models')
     parser.add_argument('--batch-size', type=int, default=16)
-    parser.add_argument('--learning_rate', type=float, default=1e-3)
-    parser.add_argument('--scaling_factor', type=int, default=4) # the scaling factor for the generator; the input LR images will be downsampled from the target HR images by this factor
-    parser.add_argument('--n_channels', type=int, default=64)  # number of channels in-between, i.e. the input and output channels for the residual and subpixel convolutional blocks# number of residual blocks
-    parser.add_argument('--large_kernel_size', type=int, default=9) # kernel size of the first and last convolutions which transform the inputs and outputs
-    parser.add_argument('--small_kernel_size', type=int, default=3) # kernel size of all convolutions in-between, i.e. those in the residual and subpixel convolutional blocks 
-    parser.add_argument('--n_blocks', type=int, default=16) # number of residual blocks
-    parser.add_argument('--n_epochs', type=int, default=200)
+    parser.add_argument('--learning-rate', type=float, default=1e-3)
+    parser.add_argument('--scaling-factor', type=int, default=4) # the scaling factor for the generator; the input LR images will be downsampled from the target HR images by this factor
+    parser.add_argument('--n-channels', type=int, default=64)  # number of channels in-between, i.e. the input and output channels for the residual and subpixel convolutional blocks# number of residual blocks
+    parser.add_argument('--large-kernel-size', type=int, default=9) # kernel size of the first and last convolutions which transform the inputs and outputs
+    parser.add_argument('--small-kernel-size', type=int, default=3) # kernel size of all convolutions in-between, i.e. those in the residual and subpixel convolutional blocks 
+    parser.add_argument('--n-blocks', type=int, default=16) # number of residual blocks
+    parser.add_argument('--n-epochs', type=int, default=200)
     parser.add_argument('--nni', action='store_true', default=False)
+    
     parser = pl.Trainer.add_argparse_args(parser)
+    #parser = SRResNet.add_model_specific_args(parser)
     args = parser.parse_args()
 
     if args.nni:
@@ -366,16 +380,24 @@ if __name__ == '__main__':
     print()
 
     # callbacks
-    checkpoint_callback = ModelCheckpoint(monitor="val_loss", dirpath=args.save_model_path, filename='best_model')#'{epoch}-{val_loss:.2f}-{other_metric:.2f}')
+    checkpoint_callback = ModelCheckpoint(monitor="val_loss", dirpath=args.save_model_path, filename='best_model-{epoch}-{val_loss:.2f}')
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=10, verbose=False, mode="min")
 
     model = SRResNet(args)
     data_module = SRDataModule(args)
-    trainer = pl.Trainer.from_argparse_args(args, callbacks=[checkpoint_callback, SRCallbacks(args)], max_epochs=args.n_epochs)
-    trainer.fit(model, data_module)
+    data_module.setup(stage='fit')
+    train_loader = data_module.train_dataloader()
+    valid_loader = data_module.val_dataloader()
+
+
+    trainer = pl.Trainer.from_argparse_args(args, callbacks=[checkpoint_callback, SRCallbacks(args)], 
+                                            max_epochs=args.n_epochs)
+    trainer.fit(model, train_loader, valid_loader)
 
     # make predictions on validation set
-    valid_model = SRResNet.load_from_checkpoint(os.path.join(args.save_model_path,'best_model.ckpt'), args=args).eval().cuda()
-    make_predictions(valid_model, data_module.val_dataloader(), trainer, args)
+    valid_model = SRResNet.load_from_checkpoint(checkpoint_callback.best_model_path, args=args).eval()
+    if args.accelerator=='gpu':
+        valid_model = valid_model.cuda()
+    make_predictions(valid_model, valid_loader, args)
 
      

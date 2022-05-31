@@ -1,0 +1,28 @@
+experimentName: first search
+trialConcurrency: 2
+maxExecDuration: 24h
+maxTrialNum: 200
+searchSpacePath: /work/ka1176/frauke/super-resolution/nni/search_space/search_space.json
+logDir: /work/ka1176/frauke/super-resolution/nni/nni-experiments
+#choice: local, remote, pai, kubeflow
+trainingServicePlatform: local
+#choice: true, false
+useAnnotation: false
+tuner:
+  #choice: TPE, Random, Anneal, Evolution
+  builtinTunerName: TPE
+  classArgs:
+    #choice: maximize, minimize
+    optimize_mode: minimize
+assessor:
+   builtinAssessorName: Medianstop
+   classArgs:
+     optimize_mode: minimize
+     start_step: 20
+trial:
+  command: python3 /work/ka1176/frauke/super-resolution/srresnet.py --data-dir /work/ka1176/frauke/super-resolution/data --output-path /work/ka1176/frauke/super-resolution/data/preds.h5 --nni --gpus 1 
+  codeDir: /work/ka1176/frauke/super-resolution/
+  gpuNum: 1
+localConfig:
+  useActiveGpu: false
+
