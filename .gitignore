@@ -3,3 +3,4 @@ jobs/sr*
 jobs/lightning_logs
 jobs/saved_models
 nni/nni-experiments/*
+notebooks/.ipynb_checkpoints/data-exploration-checkpoint.ipynb

@@ -48,14 +48,34 @@ class SRDataset(Dataset):
 
         return x, y
 
+
+class AddGaussianNoise(object):
+    def __init__(self, mean=0., std=1.):
+        self.std = std
+        self.mean = mean
+        
+    def __call__(self, tensor):
+        return tensor + torch.randn(tensor.size()) * self.std + self.mean
+    
+    def __repr__(self):
+        return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
+
+
 class SRDataModule(pl.LightningDataModule):
     def __init__(self, args):
         super().__init__()
         self.train_transform = transforms.Compose([transforms.ToPILImage(),
                                                 transforms.RandomHorizontalFlip(),
-                                             transforms.RandomVerticalFlip(),
-                                             transforms.ToTensor(),
-                                             transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
+                                                transforms.RandomVerticalFlip(),
+                                                transforms.RandomInvert(),
+                                                transforms.ColorJitter(),
+                                                transforms.RandomGrayscale(),
+                                                transforms.ToTensor(),
+                                                transforms.RandomRotation(90),
+                                                transforms.RandomRotation(180),
+                                                transforms.RandomRotation(270),
+                                                #AddGaussianNoise(0.1, 0.08),
+                                                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
         self.val_transform = transforms.Compose([transforms.ToTensor(),
                                                 transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
 
@@ -264,6 +284,30 @@ class SRResNet(pl.LightningModule):
         loss = criterion(y_hat, y)
         return loss
 
+    #def MeanGradientError(self, y_hat, targets, weight):
+    #    filter_x = torch.tensor([[-1, -2, -2], [0, 0, 0], [1, 2, 1]], dtype = y_hat.dtype)
+    #    filter_y = torch.tensor([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype = y_hat.dtype)
+
+        # output gradient
+    #    conv_filter_x = torch.nn.Conv2d(3, 2, 3, stride=1, padding="same")
+    #    y_hat_gradient_x = torch.square(conv_filter_x)
+    #    y_hat_gradient_y = torch.square(torch.nn.conv2d(y_hat, filter_y, strides = 1, padding = 'SAME'))
+
+        #target gradient
+    #    target_gradient_x = tf.math.square(tf.nn.conv2d(targets, filter_x, strides = 1, padding = 'SAME'))
+    #    target_gradient_y = tf.math.square(tf.nn.conv2d(targets, filter_y, strides = 1, padding = 'SAME'))
+
+        # square
+    #    y_hat_gradients = tf.math.sqrt(tf.math.add(output_gradient_x, output_gradient_y))
+    #    target_gradients = tf.math.sqrt(tf.math.add(target_gradient_x, target_gradient_y))
+
+        # compute mean gradient error
+    #    shape = output_gradients.shape[1:3]
+    #    mge = tf.math.reduce_sum(tf.math.squared_difference(output_gradients, target_gradients) / (shape[0] * shape[1]))
+
+    #    return mge * weight
+
+
     def training_step(self, train_batch, batch_idx):
         x, y = train_batch
         y_hat = self.forward(x)
@@ -304,7 +348,6 @@ class SRCallbacks(Callback):
         if self.args.nni:
             nni.report_final_result(float(metrics['val_loss']))
 
-
 def add_nni_params(args):
     args_nni = nni.get_next_parameter()
     assert all([key in args for key in args_nni.keys()]), 'need only valid parameters'
@@ -326,10 +369,20 @@ def add_nni_params(args):
 def make_predictions(model, dataloader, args):
     print('make predictions...')
     start_time = time.time()
+    mean = torch.tensor([0.485, 0.456, 0.406])
+    std = torch.tensor([0.229, 0.224, 0.225])
+    mean_rev = -(mean/std)
+    std_rev = 1/std
+    un_transform = transforms.Compose([#transforms.ToTensor(),
+                                       transforms.Normalize(mean_rev, std_rev)#,
+                                       #transforms.ToPILImage()
+                                       ])
     y_pred = []
     for batch in dataloader:
         X, y = batch
         pred = model(X)
+        for i in range(X.size()[0]): # range of batch size
+            pred[i] = un_transform(pred[i])
         y_pred.append(pred)
     y_pred = torch.concat(y_pred, axis=0).detach()
     if args.accelerator=='gpu':
