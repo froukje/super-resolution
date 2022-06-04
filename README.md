@@ -19,7 +19,15 @@
 * model code based on https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Super-Resolution
 * converted to pytorch lightning
 * added NNI for hyperparamtertuning
+* added mlflow
 
-## Training (ToDo)
+## Training 
+### SRResNet
+* run script with desired parameters, e.g. ```python3 srresnet.py --n-blocks 8 --batch-size 12 --n-channels 22 --gpus 1 --n-epochs 200```
+* use batch script saved in ```jobs/start_job.sh``` or ```start_job_nni.sh``` to include hyperparameter tuning using ```nni```
+* results are not reported to nni, but to mlflow
+* example files for hyperparamter tuning are in ```nni/config/config.py``` and ```nni/search_space/search_space.json```
 
-## Evaluation (ToDo) 
+## Evaluation 
+* example plots are in notebooks/plot-predictions.ipynb
+![example prediction](notebooks/example_prediction.png)
