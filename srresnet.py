@@ -1,6 +1,7 @@
 import os
 try:
     import nni
+    from nni.utils import merge_parameter
 except ImportError:
     pass
 import numpy
@@ -16,6 +17,8 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, Callback
+import mlflow.pytorch
+mlflow.set_tracking_uri("sqlite:///mlruns.db")
 
 class SRDataset(Dataset):
     def __init__(self, data_path, args, transform=None):
@@ -64,16 +67,16 @@ class AddGaussianNoise(object):
 class SRDataModule(pl.LightningDataModule):
     def __init__(self, args):
         super().__init__()
-        self.train_transform = transforms.Compose([transforms.ToPILImage(),
-                                                transforms.RandomHorizontalFlip(),
-                                                transforms.RandomVerticalFlip(),
-                                                transforms.RandomInvert(),
-                                                transforms.ColorJitter(),
-                                                transforms.RandomGrayscale(),
+        self.train_transform = transforms.Compose([#transforms.ToPILImage(),
+                                                #transforms.RandomHorizontalFlip(),
+                                                #transforms.RandomVerticalFlip(),
+                                                #transforms.RandomInvert(),
+                                                #transforms.ColorJitter(),
+                                                #transforms.RandomGrayscale(),
                                                 transforms.ToTensor(),
-                                                transforms.RandomRotation(90),
-                                                transforms.RandomRotation(180),
-                                                transforms.RandomRotation(270),
+                                                #transforms.RandomRotation(90),
+                                                #transforms.RandomRotation(180),
+                                                #transforms.RandomRotation(270),
                                                 #AddGaussianNoise(0.1, 0.08),
                                                 transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
         self.val_transform = transforms.Compose([transforms.ToTensor(),
@@ -229,6 +232,7 @@ class SRResNet(pl.LightningModule):
         :param scaling_factor: factor to scale input images by (along both dimensions) in the subpixel convolutional block
         """
         super(SRResNet, self).__init__()
+        self.save_hyperparameters(args)
 
         # Scaling factor must be 2, 4 or 8
         scaling_factor = int(args.scaling_factor)
@@ -284,30 +288,6 @@ class SRResNet(pl.LightningModule):
         loss = criterion(y_hat, y)
         return loss
 
-    #def MeanGradientError(self, y_hat, targets, weight):
-    #    filter_x = torch.tensor([[-1, -2, -2], [0, 0, 0], [1, 2, 1]], dtype = y_hat.dtype)
-    #    filter_y = torch.tensor([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype = y_hat.dtype)
-
-        # output gradient
-    #    conv_filter_x = torch.nn.Conv2d(3, 2, 3, stride=1, padding="same")
-    #    y_hat_gradient_x = torch.square(conv_filter_x)
-    #    y_hat_gradient_y = torch.square(torch.nn.conv2d(y_hat, filter_y, strides = 1, padding = 'SAME'))
-
-        #target gradient
-    #    target_gradient_x = tf.math.square(tf.nn.conv2d(targets, filter_x, strides = 1, padding = 'SAME'))
-    #    target_gradient_y = tf.math.square(tf.nn.conv2d(targets, filter_y, strides = 1, padding = 'SAME'))
-
-        # square
-    #    y_hat_gradients = tf.math.sqrt(tf.math.add(output_gradient_x, output_gradient_y))
-    #    target_gradients = tf.math.sqrt(tf.math.add(target_gradient_x, target_gradient_y))
-
-        # compute mean gradient error
-    #    shape = output_gradients.shape[1:3]
-    #    mge = tf.math.reduce_sum(tf.math.squared_difference(output_gradients, target_gradients) / (shape[0] * shape[1]))
-
-    #    return mge * weight
-
-
     def training_step(self, train_batch, batch_idx):
         x, y = train_batch
         y_hat = self.forward(x)
@@ -337,16 +317,16 @@ class SRCallbacks(Callback):
         for key, item in metrics.items():
             print(f'{key}: {item:.4}')
 
-        if self.args.nni:
-            nni.report_intermediate_result(float(metrics['val_loss']))
+        #if self.args.nni:
+        #    nni.report_intermediate_result(float(metrics['val_loss']))
 
     def on_train_end(self, trainer, pl_module):
         metrics = trainer.callback_metrics
         print(f'\Final validation loss:')
         for key, item in metrics.items():
             print(f'{key}: {item:.4}')
-        if self.args.nni:
-            nni.report_final_result(float(metrics['val_loss']))
+        #if self.args.nni:
+        #    nni.report_final_result(float(metrics['val_loss']))
 
 def add_nni_params(args):
     args_nni = nni.get_next_parameter()
@@ -368,15 +348,13 @@ def add_nni_params(args):
 
 def make_predictions(model, dataloader, args):
     print('make predictions...')
+    # undo normalization
     start_time = time.time()
     mean = torch.tensor([0.485, 0.456, 0.406])
     std = torch.tensor([0.229, 0.224, 0.225])
     mean_rev = -(mean/std)
     std_rev = 1/std
-    un_transform = transforms.Compose([#transforms.ToTensor(),
-                                       transforms.Normalize(mean_rev, std_rev)#,
-                                       #transforms.ToPILImage()
-                                       ])
+    un_transform = transforms.Compose([transforms.Normalize(mean_rev, std_rev)])
     y_pred = []
     for batch in dataloader:
         X, y = batch
@@ -420,7 +398,9 @@ if __name__ == '__main__':
     parser.add_argument('--n-blocks', type=int, default=16) # number of residual blocks
     parser.add_argument('--n-epochs', type=int, default=200)
     parser.add_argument('--nni', action='store_true', default=False)
-    
+   
+
+    #mlflow.pytorch.autolog()
     parser = pl.Trainer.add_argparse_args(parser)
     #parser = SRResNet.add_model_specific_args(parser)
     args = parser.parse_args()
@@ -442,10 +422,22 @@ if __name__ == '__main__':
     train_loader = data_module.train_dataloader()
     valid_loader = data_module.val_dataloader()
 
+    tuner_params = nni.get_next_parameter()
+    params = vars(merge_parameter(args, tuner_params))
+    # get parameters form tuner
+    print(nni.get_trial_id())
 
-    trainer = pl.Trainer.from_argparse_args(args, callbacks=[checkpoint_callback, SRCallbacks(args)], 
-                                            max_epochs=args.n_epochs)
-    trainer.fit(model, train_loader, valid_loader)
+    
+    trainer = pl.Trainer.from_argparse_args(args, 
+                            callbacks=[checkpoint_callback, SRCallbacks(args)], 
+                            max_epochs=args.n_epochs)
+    
+    mlflow.set_experiment("hyperparam-search")
+    with mlflow.start_run():
+        mlflow.log_params(params)
+        mlflow.pytorch.autolog()
+        mlflow.set_tag(key="NNI experiment", value=nni.get_experiment_id())
+        trainer.fit(model, train_loader, valid_loader)
 
     # make predictions on validation set
     valid_model = SRResNet.load_from_checkpoint(checkpoint_callback.best_model_path, args=args).eval()
