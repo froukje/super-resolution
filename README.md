@@ -31,3 +31,13 @@
 ## Evaluation 
 * example plots are in notebooks/plot-predictions.ipynb
 ![example prediction](notebooks/example_prediction.png)
+
+## Deployment
+* model is served using torchserve
+* the handler script is based on the ```BaseHandler``` class and can be found in ```deployment/srnet_handler.py```
+* create the ```.mar``` file using the ```create-mar.sh``` script
+* run ```docker build -t srnet-mar:v1 .``` to create the docker image
+* run ```docker-compose up``` to start the service
+* check registeres models: ```curl http://127.0.0.1:8081/models```
+* make predictions: ```curl http://127.0.0.1:8080/predictions/srnet -T ../data/LR/0.png``` 
+* The config.properties file is needed to change the maximun output size
