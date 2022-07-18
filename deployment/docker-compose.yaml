@@ -5,5 +5,9 @@ services:
     image: srnet-mar:v1
     ports:
       - "8080:8080"
-      - "8081:8081" 
+      - "8081:8081"
+  srnetapp:
+    build: app/
+    ports:
+      - "9696:9696" 
 

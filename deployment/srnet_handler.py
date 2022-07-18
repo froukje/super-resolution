@@ -171,7 +171,7 @@ class SRNetHandler(BaseHandler):
         un_transform = transforms.Compose([transforms.Normalize(mean_rev, std_rev)])
 
         img_hr = un_transform(data.squeeze()).unsqueeze(dim=0)
-        img_hr = data.permute(0, 2, 3, 1)
+        img_hr = img_hr.permute(0, 2, 3, 1)
         logger.info(f"output size: {img_hr.size()}")
 
         return img_hr.tolist()
