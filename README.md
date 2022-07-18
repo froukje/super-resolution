@@ -37,7 +37,13 @@
 * the handler script is based on the ```BaseHandler``` class and can be found in ```deployment/srnet_handler.py```
 * create the ```.mar``` file using the ```create-mar.sh``` script
 * run ```docker build -t srnet-mar:v1 .``` to create the docker image
-* run ```docker-compose up``` to start the service
+* ```docker run -p 8080:8080 -p 8081:8081 srnet-mar:v1```
 * check registeres models: ```curl http://127.0.0.1:8081/models```
 * make predictions: ```curl http://127.0.0.1:8080/predictions/srnet -T ../data/LR/0.png``` 
 * The config.properties file is needed to change the maximun output size
+
+## Web App
+* simple web app is stored in folder ```app```
+* run ```docker-compose up``` to start the services
+* navigate to ```localhost:9696``` in browser
+
