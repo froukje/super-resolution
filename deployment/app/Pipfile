@@ -9,6 +9,7 @@ requests = "*"
 gunicorn = "*"
 pillow = "*"
 numpy = "*"
+patchify = "*"
 
 [dev-packages]
 

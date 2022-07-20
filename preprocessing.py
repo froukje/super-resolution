@@ -16,6 +16,8 @@ def main(args):
         img = Image.open(image)
         # assumes all images in each folder have the same size!
         data_lr.append(img)
+    
+    data_lr = data_lr.sort()
     data_array_lr = np.stack(data_lr)
     print(f'LR data shape: {data_array_lr.shape}')
     
@@ -27,9 +29,12 @@ def main(args):
         img = Image.open(image)
         # assumes all images in each folder have the same size!
         data_hr.append(img)
+    
+    data_hr = data_hr.sort()
     data_array_hr = np.stack(data_hr)
     print(f'HR data shape: {data_array_hr.shape}')
- 
+
+
     # train test split
     lr_train, lr_valid, hr_train, hr_valid = train_test_split(data_array_lr, data_array_hr, random_state=42)
     

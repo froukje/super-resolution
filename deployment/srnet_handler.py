@@ -168,8 +168,9 @@ class SRNetHandler(BaseHandler):
         std = torch.tensor([0.229, 0.224, 0.225])
         mean_rev = -(mean/std)
         std_rev = 1/std
-        un_transform = transforms.Compose([transforms.Normalize(mean_rev, std_rev)])
+        un_transform = transforms.Compose([transforms.Normalize(mean_rev, std_rev)])    
 
+        # loop over all images in batch
         img_hr = un_transform(data.squeeze()).unsqueeze(dim=0)
         img_hr = img_hr.permute(0, 2, 3, 1)
         logger.info(f"output size: {img_hr.size()}")

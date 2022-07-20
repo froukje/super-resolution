@@ -232,7 +232,7 @@ class SRResNet(pl.LightningModule):
         :param scaling_factor: factor to scale input images by (along both dimensions) in the subpixel convolutional block
         """
         super(SRResNet, self).__init__()
-        self.save_hyperparameters(args)
+        #self.save_hyperparameters(args)
 
         # Scaling factor must be 2, 4 or 8
         scaling_factor = int(args.scaling_factor)
@@ -343,8 +343,6 @@ def add_nni_params(args):
         nni_path = os.path.join(nni_output_dir, os.path.basename(args_dict[param]))
         args_dict[param] = nni_path
     return args
-
-
 
 def make_predictions(model, dataloader, args):
     print('make predictions...')

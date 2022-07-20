@@ -6,3 +6,5 @@ nni/nni-experiments/*
 notebooks/.ipynb_checkpoints/*
 saved_models/*
 deployment/app/static/*
+mlruns/*
+mlruns.db
