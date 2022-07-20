@@ -36,9 +36,11 @@ def predict():
         filename = f'{name}.{filepost}'
 
         basedir = os.path.abspath(os.path.dirname(__file__))
-        img_path = os.path.join(basedir, app.config['IMAGE_UPLOADS'], filename)
-        image.save(img_path)
-        img_lr = Image.open(img_path).convert('RGB')
+        path_static = os.path.join(basedir, app.config['IMAGE_UPLOADS'])
+        img_path = os.path.join(path_static, 'tmp')
+        img_file = os.path.join(img_path, filename)
+        image.save(img_file)
+        img_lr = Image.open(img_file).convert('RGB')
      
         # cut image in 96x96 patches
         # fill np array with 0s, so that width and height are divisible by 96
@@ -59,7 +61,6 @@ def predict():
 
         # save image patches
         patches_upscaled = []
-        img_path = os.path.join(basedir, app.config['IMAGE_UPLOADS'])
         for i in range(patches.shape[0]):
             for j in range(patches.shape[1]):
                 patch = Image.fromarray(patches[i, j, 0, :, :, :])
@@ -81,11 +82,11 @@ def predict():
         img_output = np.zeros(output_size)
         img_output = img_upscale_array[:out_x,:out_y,:]
         prediction = Image.fromarray((img_output*255).astype(np.uint8))
-        output_name = f"{name}_out.{filepost}" 
-        output_path = os.path.join(basedir, 'static', app.config['IMAGE_UPLOADS'], output_name)
+        output_name = f"tmp/{name}_out.{filepost}" 
+        output_path = os.path.join(path_static, output_name)
         prediction.save(output_path)
 
-        return render_template('index.html', prediction_text='Upscaled Image', output_name=output_name)
+        return render_template('index.html', output_name=output_name)
     
 @app.route('/delete')
 def delete(basedir, name):

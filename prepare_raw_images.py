@@ -52,10 +52,11 @@ def cut_and_save_images(images_hr_lr):
 
 def main(): 
     images_path = read_raw_images(path_raw_images)
-
+    print('read image paths')
     images_hr_lr = prepare_images(images_path)
-
+    print('images prepared')
     cut_and_save_images(images_hr_lr)
+    print('images saved')
 
 if __name__ == '__main__':
     
