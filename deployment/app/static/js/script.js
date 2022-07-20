@@ -5,11 +5,7 @@ var loadFile = function(event) {
 
 var showImg = function(event) {
 var upload = document.getElementById('uploaded-img');
+var upscaled = document.getElementById('upscaled-img');
     upload.classList.toggle("show");
-}
-
-var showUpImg = function(event){
-var upscaled = document.getElementById('img-up');
-    upscaled.classList.toggle("show");
-    //event.preventDefault();
+    upscaled.classList.toggle("not-show");
 }
