@@ -5,6 +5,7 @@ jobs/saved_models
 nni/nni-experiments/*
 notebooks/.ipynb_checkpoints/*
 saved_models/*
-deployment/app/static/*
+deployment/app/static/tmp/*
+deployment/app/static/images/Screenshot.png
 mlruns/*
 mlruns.db
