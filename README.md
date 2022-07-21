@@ -3,7 +3,7 @@
 This repository contains a super resolution network upscaling images of a factor of 4 and a web app. The final web app looks like th
 is:
 
-![screenshot_webapp.png]
+![screenshot_webapp.jpeg]
 
 ## Data
 * data from [kaggle.com](https://www.kaggle.com/datasets/akhileshdkapse/super-image-resolution)
