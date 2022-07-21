@@ -46,7 +46,6 @@ nav ul li a {
   color: #fff;
 }
 
-
 .file{
   display: none;
 }
@@ -90,6 +89,7 @@ nav ul li a {
 
 .upscaled-img{
   display: block;
+  margin-top: 30px;
 }
 
 .form-uploaded{
@@ -201,3 +201,23 @@ nav ul li a {
   from{ bottom:-100px; opacity:0 } 
   to{ bottom:0; opacity:1 }
 }
+
+/* MORE */
+.more {
+  min-height: 400px;
+  padding: 5% 20%;
+  width: 100%; /* The width is 50%, by default */
+  text-decoration: none;
+  color: #fff;
+}
+
+.more h1{
+  font-size: 30px;
+  font-weight: 400;
+}
+
+.more a {
+  color: #fff;
+}
+
+/* CONTACT */

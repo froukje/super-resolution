@@ -112,6 +112,14 @@ def delete():
             if time_saved[i] < delete_time:
                 os.remove(file_)
 
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
+
+@app.route('/more')
+def more():
+    return render_template('more.html')
+
 if __name__ == "__main__":
     IMG_SIZE = 96
     IMG_CHANNEL = 3

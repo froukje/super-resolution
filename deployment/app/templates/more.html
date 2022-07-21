@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Your Super Resolution</title>
+{% endblock %}
+
+{% block hero %}
+
+<div class="more">
+  <h1>Some Infos</h1>
+  <br>
+  <p>This is a personal project.</p>
+  <br>
+  <p>
+  The picture of the lizzard was downloaded from 
+  <a href="https://www.freepik.com/photos/chameleon">Chameleon photo created by kuritafsheen77 - www.freepik.com</a>.
+  </p>
+  <br>
+  <p>
+  The increased resolution of the image is achieved using a super resolution neural network. 
+  The network architecture is based on the generator network of the paper 
+  <a href="https://arxiv.org/abs/1609.04802">Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network</a>.
+  The code from their <a href="https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Super-Resolution">github</a> has been adapted and transformed to pytorch-lightning. 
+  The complete code of the model, the preprocessing and this web app can be found on my
+  <a href="https://github.com/froukje/super-resolution">github</a>. 
+  </p>
+</div>
+{% endblock %}

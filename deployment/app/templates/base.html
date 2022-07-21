@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Super Resolution</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='stylesheets/styles.css') }}" />
+        <script  type="text/javascript" src="{{ url_for('static', filename='js/script.js') }}"></script>
+        {% block head  %}{% endblock %}
+</head>
+<body>
+    <div class="hero" id="hero">
+    <br>
+    <nav>
+        <img src="{{ url_for('static', filename='images/logo_1.png') }}" class="logo">
+        <ul>
+          <li><a href="{{ url_for('home') }}">Home</a> </li>
+          <li><a href="{{ url_for('contact') }}">Contact</a> </li>
+          <li><a href="{{ url_for('more') }}">More</a></li>
+        </ul>
+      </nav>
+      {% block hero  %}{% endblock %}
+      </div>
+        {% block body %}{% endblock %}
+</body>
+</html>
