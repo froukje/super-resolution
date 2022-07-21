@@ -17,11 +17,16 @@ nav{
   display:flex;
   align-items: center;
   padding: 20px 8%;
+  background: #273746;
 }
 
 nav .logo{
   width: 250px;
   cursor: pointer;
+  margin-bottom: -33px;
+  margin-top: -50px;
+  margin-left: -20px;
+  width: 30%
 }
 
 nav ul{
@@ -33,12 +38,14 @@ nav ul li{
   display: inline-block;
   list-style: none;
   margin: 0 20px;
+  padding-right: 10px;
 }
 
 nav ul li a {
   text-decoration: none;
   color: #fff;
 }
+
 
 .file{
   display: none;

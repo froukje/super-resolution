@@ -3,6 +3,9 @@ import glob
 import shutil
 import uuid
 import time
+from datetime import datetime
+from datetime import timedelta
+import pytz
 import requests
 from flask import Flask, request, render_template, redirect
 import pickle
@@ -15,9 +18,9 @@ app = Flask(__name__)
 
 app.config['IMAGE_UPLOADS'] = os.path.join(os.getcwd(), 'static')
 
-
 @app.route('/', methods=['POST', 'GET'])
 def home():
+    ''' delete saved images older than 5 minutes'''
     return render_template('index.html')
 
 
@@ -32,9 +35,10 @@ def predict():
 
         filepost = secure_filename(image.filename).split('.')[1]
         # create unique filename
-        name = str(uuid.uuid4())
+        now = datetime.now(pytz.timezone('Europe/Amsterdam'))
+        time = f"{now.year}-{now.month}-{now.day}-{now.hour}-{now.minute}"
+        name = f"{str(uuid.uuid4())}_{time}"
         filename = f'{name}.{filepost}'
-
         basedir = os.path.abspath(os.path.dirname(__file__))
         path_static = os.path.join(basedir, app.config['IMAGE_UPLOADS'])
         img_path = os.path.join(path_static, 'tmp')
@@ -88,19 +92,29 @@ def predict():
 
         return render_template('index.html', output_name=output_name)
     
-@app.route('/delete')
-def delete(basedir, name):
-    ''' delete saved images'''
-    path = os.path.join(basedir, 'static')
-    remove_files = glob.glob(f'{path}/{name}*')
-    fivemin = 60*5
-    time.sleep(fivemin)
-    for file_ in remove_files:
-        os.remove(file_)
+def delete():
+    ''' delete saved images if timestamp is older than 5 minutes'''
 
+    now = datetime.now()
+    time = f"{now.year}-{now.month}-{now.day}-{now.hour}-{now.minute}"
+    n = 5
+    # Subtract 5 minutes from datetime object
+    delete_time = now - timedelta(minutes=n)
+
+    path = os.path.join(app.config['IMAGE_UPLOADS'], 'tmp')
+    all_files = glob.glob(f'{path}/*')
+    if all_files != []:
+        # uuid has length of 93
+        dates = [file_[93:].split('.')[0].split('_')[0] for file_ in all_files]
+        time_saved = [datetime.strptime(date, '%Y-%m-%d-%H-%M') for date in dates]
+        print('time saved', time_saved)
+        for i, file_ in enumerate(all_files):
+            if time_saved[i] < delete_time:
+                os.remove(file_)
 
 if __name__ == "__main__":
     IMG_SIZE = 96
     IMG_CHANNEL = 3
     UPSCALE_FACTOR = 4
+    delete()
     app.run(debug=True, host="0.0.0.0", port=9696)

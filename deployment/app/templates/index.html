@@ -8,51 +8,51 @@
 </head>
 
 <body>
-   <div class="hero">
-      <br>
-      <nav>
-        <img src="{{ url_for('static', filename='images/Screenshot.png') }}" class="logo">
-        <ul>
-          <li><href="">Home</href> </li>
-          <li><href="">Contact</href> </li>
-          <li><href="">More</href> </li>
-        </ul>
-      </nav>
+  <div class="hero">
+    <br>
+    <nav>
+      <img src="{{ url_for('static', filename='images/logo_1.png') }}" class="logo">
+      <ul>
+        <li><href="">Home</href> </li>
+        <li><href="">Contact</href> </li>
+        <li><href="">More</href></li>
+      </ul>
+    </nav>
 
-      <div class="upload">
-        <div class="upload-text">
-          <h1>Get More Out Of<br>Your Pictures!</h1>
-          <p>You have a picture, which you love, but the resolution is bad?<br>
+    <div class="upload">
+      <div class="upload-text">
+        <h1>Get More Out Of<br>Your Pictures!</h1>
+        <p>You have a picture, which you love, but the resolution is bad?<br>
             Upload your image and increase its resolution by a factor of 4.</p>
-          <label for="file" style="cursor: pointer;" class="btn" onclick="showImg(event)">Upload Image</label>
-        </div>
+        <label for="file" style="cursor: pointer;" class="btn" onclick="showImg(event)">Upload Image</label>
       </div>
+    </div>
             
-      <div class="upscaled" id="upscaled">
-        <div class="uploaded-img" id="uploaded-img">
-          <form class="form-uploaded" method="post" action="{{ url_for('predict') }}" enctype="multipart/form-data"> 
-            <input type="file"  accept="image/png, image/jpg, image/jpeg" name="file" id="file" class="file" onchange="loadFile(event)"> 
-            <img id="input" class="img-orig" width="200"/>
-            <br>
-            <br>        
-            <div class="div-btn-up">          
-              <button type="submit" class="btn" id="btn" onclick="showImg(event)">Upscale Image!</button>           
-            </div>
-            </form>
+    <div class="upscaled" id="upscaled">
+      <div class="uploaded-img" id="uploaded-img">
+        <form class="form-uploaded" method="post" action="{{ url_for('predict') }}" enctype="multipart/form-data"> 
+          <input type="file"  accept="image/png, image/jpg, image/jpeg" name="file" id="file" class="file" onchange="loadFile(event)"> 
+          <img id="input" class="img-orig" width="200"/>
+        <br>
+        <br>        
+        <div class="div-btn-up">
+          <button type="submit" class="btn" id="btn" onclick="showImg(event)">Upscale Image!</button>           
         </div>
+        </form>
+      </div>
 
-        <div class="upscaled-img" id="upscaled-img">
-          <p><h1>Your upscaled Image</h1></p>
-          <br>
-          <div class="preview-text">Preview</div>
-          <br>
-          <div class="preview"> 
-            <img class="img-up" id="img-up" src="{{ url_for('static', filename='{}'.format(output_name) ) }}" alt="No output available" width="100"/>
-            <a href="{{ url_for('static', filename='{}'.format(output_name) ) }}" download="{{ output_name }}" class="btn">Download</a>
-          </div>
+      <div class="upscaled-img" id="upscaled-img">
+        <p><h1>Your upscaled Image</h1></p>
+        <br>
+        <div class="preview-text">Preview</div>
+        <br>
+        <div class="preview"> 
+          <img class="img-up" id="img-up" src="{{ url_for('static', filename='{}'.format(output_name) ) }}" alt="No output available" width="100"/>
+          <a href="{{ url_for('static', filename='{}'.format(output_name) ) }}" download="{{ output_name }}" class="btn">Download</a>   
         </div>
       </div>
     </div>
+  </div>
 
     
 </body>
