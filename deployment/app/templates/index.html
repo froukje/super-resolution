@@ -8,7 +8,18 @@
 </head>
 
 <body>
-  <div class="hero">
+  <!--loader-->
+  <div class="wrapper" id="wrapper">
+      <div class="inner"> 
+        <div style="display:table-cell;" class="loader"></div>
+        <div style="display:table-cell;" class="load-text">If your Image is large this may take a while...</div>
+      </div>
+  </div>
+
+  
+
+  <div class="hero" id="hero">
+
     <br>
     <nav>
       <img src="{{ url_for('static', filename='images/logo_1.png') }}" class="logo">
@@ -36,7 +47,7 @@
         <br>
         <br>        
         <div class="div-btn-up">
-          <button type="submit" class="btn" id="btn" onclick="showImg(event)">Upscale Image!</button>           
+          <button type="submit" class="btn" id="btn" onclick="showImg(event),showLoader(event)">Upscale Image!</button>           
         </div>
         </form>
       </div>

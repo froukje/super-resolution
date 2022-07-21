@@ -21,6 +21,7 @@ app.config['IMAGE_UPLOADS'] = os.path.join(os.getcwd(), 'static')
 @app.route('/', methods=['POST', 'GET'])
 def home():
     ''' delete saved images older than 5 minutes'''
+    delete()
     return render_template('index.html')
 
 
@@ -107,7 +108,6 @@ def delete():
         # uuid has length of 93
         dates = [file_[93:].split('.')[0].split('_')[0] for file_ in all_files]
         time_saved = [datetime.strptime(date, '%Y-%m-%d-%H-%M') for date in dates]
-        print('time saved', time_saved)
         for i, file_ in enumerate(all_files):
             if time_saved[i] < delete_time:
                 os.remove(file_)
@@ -116,5 +116,4 @@ if __name__ == "__main__":
     IMG_SIZE = 96
     IMG_CHANNEL = 3
     UPSCALE_FACTOR = 4
-    delete()
     app.run(debug=True, host="0.0.0.0", port=9696)

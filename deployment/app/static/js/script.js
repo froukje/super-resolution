@@ -9,3 +9,8 @@ var upscaled = document.getElementById('upscaled-img');
     upload.classList.toggle("show");
     upscaled.classList.toggle("not-show");
 }
+
+var showLoader = function(event) {
+    document.getElementById("wrapper").style.display = "block";
+    document.getElementById("hero").style.opacity = 0.5;
+  }
