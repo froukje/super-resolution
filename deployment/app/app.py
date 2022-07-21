@@ -3,8 +3,6 @@ import glob
 import shutil
 import uuid
 import time
-from datetime import datetime
-from datetime import timedelta
 import pytz
 import requests
 from flask import Flask, request, render_template, redirect
@@ -28,6 +26,9 @@ def home():
 @app.route('/predict',methods=['POST', 'GET'])
 def predict():
     """Grabs the input values and uses them to make prediction"""
+    IMG_SIZE = 96
+    IMG_CHANNEL = 3
+    UPSCALE_FACTOR = 4
     if request.method == 'POST':
         image = request.files["file"]
         if image.filename == '':
@@ -36,9 +37,7 @@ def predict():
 
         filepost = secure_filename(image.filename).split('.')[1]
         # create unique filename
-        now = datetime.now(pytz.timezone('Europe/Amsterdam'))
-        time = f"{now.year}-{now.month}-{now.day}-{now.hour}-{now.minute}"
-        name = f"{str(uuid.uuid4())}_{time}"
+        name = f"{str(uuid.uuid4())}"
         filename = f'{name}.{filepost}'
         basedir = os.path.abspath(os.path.dirname(__file__))
         path_static = os.path.join(basedir, app.config['IMAGE_UPLOADS'])
@@ -74,7 +73,8 @@ def predict():
 
                 #response = requests.post("http://torchserve-mar:8080/predictions/srnet", files={'data': open(img_path, 'rb')})
                 #response = requests.post("http://localhost:8080/predictions/srnet", files={'data': open(img_path, 'rb')})
-                response = requests.post("http://localhost:8080/predictions/srnet", files={'data': open(patch_path, 'rb')})         
+                #response = requests.post("http://localhost:8080/predictions/srnet", files={'data': open(patch_path, 'rb')})  
+                response = requests.post("http://torchserve-mar:8080/predictions/srnet", files={'data': open(patch_path, 'rb')})         
                 data = np.array(response.json())
                 patches_upscaled.append(data)
                 size = IMG_SIZE*UPSCALE_FACTOR
@@ -96,20 +96,17 @@ def predict():
 def delete():
     ''' delete saved images if timestamp is older than 5 minutes'''
 
-    now = datetime.now()
-    time = f"{now.year}-{now.month}-{now.day}-{now.hour}-{now.minute}"
-    n = 5
-    # Subtract 5 minutes from datetime object
-    delete_time = now - timedelta(minutes=n)
+    now = time.time()
+    delete_time = now - 5*60
 
     path = os.path.join(app.config['IMAGE_UPLOADS'], 'tmp')
     all_files = glob.glob(f'{path}/*')
     if all_files != []:
-        # uuid has length of 93
-        dates = [file_[93:].split('.')[0].split('_')[0] for file_ in all_files]
-        time_saved = [datetime.strptime(date, '%Y-%m-%d-%H-%M') for date in dates]
+        time_created = [os.stat(file_).st_mtime for file_ in all_files]
+        
         for i, file_ in enumerate(all_files):
-            if time_saved[i] < delete_time:
+            print(time_created[i], delete_time)
+            if time_created[i] < delete_time:
                 os.remove(file_)
 
 @app.route('/contact')
@@ -121,7 +118,5 @@ def more():
     return render_template('more.html')
 
 if __name__ == "__main__":
-    IMG_SIZE = 96
-    IMG_CHANNEL = 3
-    UPSCALE_FACTOR = 4
+  
     app.run(debug=True, host="0.0.0.0", port=9696)

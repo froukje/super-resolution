@@ -10,6 +10,7 @@ gunicorn = "*"
 pillow = "*"
 numpy = "*"
 patchify = "*"
+pytz = "*"
 
 [dev-packages]
 
