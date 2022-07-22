@@ -1,5 +1,6 @@
 import os
 import glob
+import uuid
 import numpy as np
 from PIL import Image
 
@@ -44,9 +45,10 @@ def cut_and_save_images(images_hr_lr):
         img_big = img_big.resize((patch_size_big, patch_size_big), Image.ANTIALIAS)
         img_small = img_small.resize((patch_size_small, patch_size_small), Image.ANTIALIAS)
 
-        name = f'{img[2]}'
-        img_big.save(os.path.join(path_hr, f'{name}_big.png')) 
-        img_small.save(os.path.join(path_lr, f'{name}_small.png')) 
+        name = f"{str(uuid.uuid4())}" #f'{img[2]}'
+        quality_val = 90
+        img_big.save(os.path.join(path_hr, f'{name}.png'), quality=quality_val) 
+        img_small.save(os.path.join(path_lr, f'{name}.png'), quality=quality_val) 
 
         
 
@@ -60,9 +62,9 @@ def main():
 
 if __name__ == '__main__':
     
-    path_raw_images = 'data/raw'
-    path_lr = 'data/LR'
-    path_hr = 'data/HR'
+    path_raw_images = 'data/raw_feli_2'
+    path_lr = 'data/LR_feli_2'
+    path_hr = 'data/HR_feli_2'
 
     main()
 
