@@ -16,6 +16,9 @@ RUN pipenv install --system --deploy
 # copy the python script we need
 COPY . ./
 
+# run deployment
+RUN prefect deployment create app.py
+
 # expose the port
 EXPOSE 9696
 

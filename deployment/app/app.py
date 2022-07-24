@@ -11,6 +11,7 @@ from werkzeug.utils import secure_filename
 import numpy as np
 from PIL import Image
 from patchify import patchify, unpatchify
+from prefect import flow, task
 
 app = Flask(__name__)
 
@@ -19,7 +20,7 @@ app.config['IMAGE_UPLOADS'] = os.path.join(os.getcwd(), 'static')
 @app.route('/', methods=['POST', 'GET'])
 def home():
     ''' delete saved images older than 5 minutes'''
-    delete()
+    #delete()
     return render_template('index.html')
 
 
@@ -71,8 +72,6 @@ def predict():
                 patch_path = os.path.join(img_path, f'{name}_{str(i).zfill(2)}_{str(j).zfill(2)}.{filepost}') 
                 patch.save(patch_path)
 
-                #response = requests.post("http://torchserve-mar:8080/predictions/srnet", files={'data': open(img_path, 'rb')})
-                #response = requests.post("http://localhost:8080/predictions/srnet", files={'data': open(img_path, 'rb')})
                 #response = requests.post("http://localhost:8080/predictions/srnet", files={'data': open(patch_path, 'rb')})  
                 response = requests.post("http://torchserve-mar:8080/predictions/srnet", files={'data': open(patch_path, 'rb')})         
                 data = np.array(response.json())
@@ -92,7 +91,7 @@ def predict():
         prediction.save(output_path)
 
         return render_template('index.html', output_name=output_name)
-    
+@task    
 def delete():
     ''' delete saved images if timestamp is older than 5 minutes'''
 
@@ -117,6 +116,27 @@ def contact():
 def more():
     return render_template('more.html')
 
+@flow
+def main():
+    delete()
+
 if __name__ == "__main__":
   
+#    main()
     app.run(debug=True, host="0.0.0.0", port=9696)
+
+#############
+# Deployment: run delete() every 30 minutes
+############
+
+from prefect.deployments import DeploymentSpec
+from prefect.orion.schemas.schedules import IntervalSchedule
+from prefect.flow_runners import SubprocessFlowRunner
+from datetime import timedelta
+
+DeploymentSpec(
+    flow=main,
+    name="delete_files",
+    schedule=IntervalSchedule(interval=timedelta(minutes=30)),
+    flow_runner=SubprocessFlowRunner()
+    )

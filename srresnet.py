@@ -67,8 +67,7 @@ class AddGaussianNoise(object):
 class SRDataModule(pl.LightningDataModule):
     def __init__(self, args):
         super().__init__()
-        self.train_transform = transforms.Compose([#transforms.ToPILImage(),
-                                                #transforms.RandomHorizontalFlip(),
+        self.train_transform = transforms.Compose([#transforms.RandomHorizontalFlip(),
                                                 #transforms.RandomVerticalFlip(),
                                                 #transforms.RandomInvert(),
                                                 #transforms.ColorJitter(),
@@ -313,7 +312,7 @@ class SRCallbacks(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         metrics = trainer.callback_metrics
-        print('\nValiddation epoch end:')
+        print('\nValidation epoch end:')
         for key, item in metrics.items():
             print(f'{key}: {item:.4}')
 
