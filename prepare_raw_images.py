@@ -1,8 +1,7 @@
 import os
 import glob
-import uuid
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 def read_raw_images(path):
     '''read image pathes'''
@@ -18,32 +17,34 @@ def prepare_images(images_path):
     * downscale to lower resolution
     * return both images
     '''
+    patch_size_small = 96
+    patch_size_big = 384 # 96*4
     imgs_hr_lr = []
     for file_ in images_path:
         name = file_.split('/')[-1].split('.')[0]
         img = Image.open(file_)
-        # crop image to a size divisable by 4
-        new_height = int((img.size[0] - img.size[0]%4)) 
-        new_width = int((img.size[1] - img.size[1]%4)) 
-        img_array = np.asarray(img)
-        img_array_crop = np.zeros((new_width, new_height, 3))
-        img_array_crop = img_array[:new_width, :new_height, :]
-        img_height = int(new_height/4)
-        img_width = int(new_width/4)
-        img = Image.fromarray(img_array_crop)
-        img_down = img.resize((img_height, img_width), Image.ANTIALIAS)
-        img_array_down = np.asarray(img_down)
-        imgs_hr_lr.append((img_array_crop, img_array_down, name))
-    return imgs_hr_lr
+        
+        img_big = img.resize((patch_size_big, patch_size_big), Image.ANTIALIAS)
+        img_big = img_big.convert('RGB')
+        img_small = img.filter(ImageFilter.GaussianBlur)
+        img_small = img_small.resize((patch_size_small, patch_size_small), Image.ANTIALIAS)
+        img_small = img_small.convert('RGB')
+
+        quality_val = 90
+        img_big.save(os.path.join(path_hr, f'{name}.jpg'), quality=quality_val) 
+        img_small.save(os.path.join(path_lr, f'{name}.jpg'), quality=quality_val) 
+
+        #imgs_hr_lr.append(img_array_crop)
+    #return imgs_hr_lr
 
 def cut_and_save_images(images_hr_lr):
     patch_size_small = 96
     patch_size_big = 384 # 96*4
     for img in images_hr_lr:
-        img_big = Image.fromarray(img[0])
-        img_small = Image.fromarray(img[1])
+        img_big = Image.fromarray(img)
         img_big = img_big.resize((patch_size_big, patch_size_big), Image.ANTIALIAS)
-        img_small = img_small.resize((patch_size_small, patch_size_small), Image.ANTIALIAS)
+        img_big = img_big.filter(ImageFilter.GaussianBlur)
+        img_small = img_big.resize((patch_size_small, patch_size_small), Image.ANTIALIAS)
 
         name = f"{str(uuid.uuid4())}" #f'{img[2]}'
         quality_val = 90
@@ -57,14 +58,12 @@ def main():
     print('read image paths')
     images_hr_lr = prepare_images(images_path)
     print('images prepared')
-    cut_and_save_images(images_hr_lr)
-    print('images saved')
 
 if __name__ == '__main__':
     
-    path_raw_images = 'data/raw_feli_2'
-    path_lr = 'data/LR_feli_2'
-    path_hr = 'data/HR_feli_2'
+    path_raw_images = 'data/coco/train2017'
+    path_lr = 'data/coco/LR-coco-train'
+    path_hr = 'data/coco/HR-coco-train'
 
     main()
 
